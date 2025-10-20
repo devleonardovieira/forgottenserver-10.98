@@ -65,9 +65,13 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 		return;
 	}
 
-	if (transformToSHA1(password) != result->getString("password")) {
-		disconnectClient("Account name or password is not correct.", version);
-		return;
+	{
+		auto dbPassView = result->getString("password");
+		std::string dbPass(dbPassView.data(), dbPassView.size());
+		if (transformToSHA1(password) != dbPass) {
+			disconnectClient("Account name or password is not correct.", version);
+			return;
+		}
 	}
 
 	auto id = result->getNumber<uint32_t>("id");
@@ -78,7 +82,8 @@ void ProtocolLogin::getCharacterList(const std::string& accountName, const std::
 	result = db.storeQuery(fmt::format("SELECT `name` FROM `players` WHERE `account_id` = {:d} AND `deletion` = 0 ORDER BY `name` ASC", id));
 	if (result) {
 		do {
-			characters.emplace_back(result->getString("name"));
+			auto nameView = result->getString("name");
+			characters.emplace_back(std::string(nameView.data(), nameView.size()));
 		} while (result->next());
 	}
 

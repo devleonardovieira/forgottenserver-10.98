@@ -23,6 +23,7 @@
 #include "spectators.h"
 #include "storeinbox.h"
 #include "weapons.h"
+#include "localization.h"
 
 extern Game g_game;
 extern Chat* g_chat;
@@ -87,58 +88,58 @@ std::string Player::getDescription(int32_t lookDistance) const {
 	std::ostringstream s;
 
 	if (lookDistance == -1) {
-		s << "yourself.";
+		s << Localization::instance().translate("yourself.", getLanguage());
 
 		if (group->access) {
-			s << " You are " << group->name << '.';
+			s << ' ' << Localization::instance().translate("You are %s.", getLanguage(), std::vector<std::string>{group->name});
 		} else if (vocation->getId() != VOCATION_NONE) {
-			s << " You are " << vocation->getVocDescription() << '.';
+			s << ' ' << Localization::instance().translate("You are %s.", getLanguage(), std::vector<std::string>{vocation->getVocDescription()});
 		} else {
-			s << " You have no vocation.";
+			s << ' ' << Localization::instance().translate("You have no vocation.", getLanguage());
 		}
 	} else {
 		s << name;
 		if (!group->access) {
-			s << " (Level " << level << ')';
+			s << ' ' << Localization::instance().translate("(Level %d)", getLanguage(), std::vector<std::string>{std::to_string(level)});
 		}
 		s << '.';
 
 		if (sex == PLAYERSEX_FEMALE) {
-			s << " She";
+			s << ' ' << Localization::instance().translate("She", getLanguage());
 		} else {
-			s << " He";
+			s << ' ' << Localization::instance().translate("He", getLanguage());
 		}
 
 		if (group->access) {
-			s << " is " << group->name << '.';
+			s << ' ' << Localization::instance().translate("is %s.", getLanguage(), std::vector<std::string>{group->name});
 		} else if (vocation->getId() != VOCATION_NONE) {
-			s << " is " << vocation->getVocDescription() << '.';
+			s << ' ' << Localization::instance().translate("is %s.", getLanguage(), std::vector<std::string>{vocation->getVocDescription()});
 		} else {
-			s << " has no vocation.";
+			s << ' ' << Localization::instance().translate("has no vocation.", getLanguage());
 		}
 	}
 
 	if (party) {
 		if (lookDistance == -1) {
-			s << " Your party has ";
+			s << ' ' << Localization::instance().translate("Your party has ", getLanguage());
 		} else if (sex == PLAYERSEX_FEMALE) {
-			s << " She is in a party with ";
+			s << ' ' << Localization::instance().translate("She is in a party with ", getLanguage());
 		} else {
-			s << " He is in a party with ";
+			s << ' ' << Localization::instance().translate("He is in a party with ", getLanguage());
 		}
 
 		size_t memberCount = party->getMemberCount() + 1;
 		if (memberCount == 1) {
-			s << "1 member and ";
+			s << Localization::instance().translate("1 member and ", getLanguage());
 		} else {
-			s << memberCount << " members and ";
+			s << Localization::instance().translate("%d members and ", getLanguage(), std::vector<std::string>{std::to_string(static_cast<int>(memberCount))});
 		}
 
 		size_t invitationCount = party->getInvitationCount();
 		if (invitationCount == 1) {
-			s << "1 pending invitation.";
+			s << Localization::instance().translate("1 pending invitation.", getLanguage());
 		} else {
-			s << invitationCount << " pending invitations.";
+			s << Localization::instance().translate("%d pending invitations.", getLanguage(), std::vector<std::string>{std::to_string(static_cast<int>(invitationCount))});
 		}
 	}
 
@@ -147,14 +148,14 @@ std::string Player::getDescription(int32_t lookDistance) const {
 	}
 
 	if (lookDistance == -1) {
-		s << " You are ";
+		s << ' ' << Localization::instance().translate("You are ", getLanguage());
 	} else if (sex == PLAYERSEX_FEMALE) {
-		s << " She is ";
+		s << ' ' << Localization::instance().translate("She is ", getLanguage());
 	} else {
-		s << " He is ";
+		s << ' ' << Localization::instance().translate("He is ", getLanguage());
 	}
 
-	s << guildRank->name << " of the " << guild->getName();
+	s << guildRank->name << Localization::instance().translate(" of the ", getLanguage()) << guild->getName();
 	if (!guildNick.empty()) {
 		s << " (" << guildNick << ')';
 	}

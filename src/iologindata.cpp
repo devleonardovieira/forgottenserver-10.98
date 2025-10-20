@@ -48,33 +48,38 @@ std::pair<uint32_t, std::string> IOLoginData::gameworldAuthentication(std::strin
 
 	DBResult_ptr result = db.storeQuery(fmt::format("SELECT `id`, UNHEX(`password`) AS `password`, `secret` FROM `accounts` WHERE `name` = {:s}", db.escapeString(accountName)));
 	if (!result) {
-		return std::make_pair(0, std::string{characterName});
+		return std::make_pair(0, std::string(characterName.data(), characterName.size()));
 	}
 
 	std::string secret = decodeSecret(result->getString("secret"));
 	if (!secret.empty()) {
 		if (token.empty()) {
-			return std::make_pair(0, std::string{characterName});
+			return std::make_pair(0, std::string(characterName.data(), characterName.size()));
 		}
 
 		bool tokenValid = token == generateToken(secret, tokenTime) || token == generateToken(secret, tokenTime - 1) || token == generateToken(secret, tokenTime + 1);
 		if (!tokenValid) {
-			return std::make_pair(0, std::string{characterName});
+			return std::make_pair(0, std::string(characterName.data(), characterName.size()));
 		}
 	}
 
-	if (transformToSHA1(password) != result->getString("password")) {
-		return std::make_pair(0, std::string{characterName});
+	{
+		auto dbPassView = result->getString("password");
+		std::string dbPass(dbPassView.data(), dbPassView.size());
+		if (transformToSHA1(password) != dbPass) {
+			return std::make_pair(0, std::string(characterName.data(), characterName.size()));
+		}
 	}
 
 	uint32_t accountId = result->getNumber<uint32_t>("id");
 
 	result = db.storeQuery(fmt::format("SELECT `name` FROM `players` WHERE `name` = {:s} AND `account_id` = {:d} AND `deletion` = 0", db.escapeString(characterName), accountId));
 	if (!result) {
-		return std::make_pair(0, std::string{characterName});
+		return std::make_pair(0, std::string(characterName.data(), characterName.size()));
 	}
 
-	return std::make_pair(accountId, std::string{result->getString("name")});
+	auto nameView = result->getString("name");
+	return std::make_pair(accountId, std::string(nameView.data(), nameView.size()));
 }
 
 uint32_t IOLoginData::getAccountIdByPlayerName(const std::string& playerName) {
@@ -181,13 +186,21 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result) {
 	uint32_t accountId = result->getNumber<uint32_t>("account_id");
 
 	auto account =
-	    db.storeQuery(fmt::format("SELECT `type`, `premium_ends_at` FROM `accounts` WHERE `id` = {:d}", accountId));
+	    db.storeQuery(fmt::format("SELECT `type`, `premium_ends_at`, `language` FROM `accounts` WHERE `id` = {:d}", accountId));
 	if (!account) {
 		return false;
 	}
+	{
+		std::string_view langView = account->getString("language");
+		std::string lang(langView.data(), langView.size());
+		if (lang.empty()) {
+			lang = "en";
+		}
+		player->setLanguage(lang);
+	}
 
 	player->setGUID(result->getNumber<uint32_t>("id"));
-	player->name = result->getString("name");
+	player->name = std::string(result->getString("name").data(), result->getString("name").size());
 	player->accountNumber = accountId;
 
 	player->accountType = static_cast<AccountType_t>(account->getNumber<int32_t>("type"));
@@ -329,7 +342,7 @@ bool IOLoginData::loadPlayer(Player* player, DBResult_ptr result) {
 	if ((result = db.storeQuery(fmt::format("SELECT `guild_id`, `rank_id`, `nick` FROM `guild_membership` WHERE `player_id` = {:d}", player->getGUID())))) {
 		uint32_t guildId = result->getNumber<uint32_t>("guild_id");
 		uint32_t playerRankId = result->getNumber<uint32_t>("rank_id");
-		player->guildNick = result->getString("nick");
+		player->guildNick = std::string(result->getString("nick").data(), result->getString("nick").size());
 
 		auto guild = g_game.getGuild(guildId);
 		if (!guild) {
@@ -856,7 +869,7 @@ bool IOLoginData::getGuidByNameEx(uint32_t& guid, bool& specialVip, std::string&
 		return false;
 	}
 
-	name = result->getString("name");
+	name = std::string(result->getString("name").data(), result->getString("name").size());
 	guid = result->getNumber<uint32_t>("id");
 	Group* group = g_game.groups.getGroup(result->getNumber<uint16_t>("group_id"));
 
@@ -879,7 +892,7 @@ bool IOLoginData::formatPlayerName(std::string& name) {
 		return false;
 	}
 
-	name = result->getString("name");
+	name = std::string(result->getString("name").data(), result->getString("name").size());
 	return true;
 }
 
@@ -950,4 +963,9 @@ void IOLoginData::removeVIPEntry(uint32_t accountId, uint32_t guid) {
 
 void IOLoginData::updatePremiumTime(uint32_t accountId, time_t endTime) {
 	Database::getInstance().executeQuery(fmt::format("UPDATE `accounts` SET `premium_ends_at` = {:d} WHERE `id` = {:d}", endTime, accountId));
+}
+
+void IOLoginData::setAccountLanguage(uint32_t accountId, const std::string& lang) {
+	Database& db = Database::getInstance();
+	db.executeQuery(fmt::format("UPDATE `accounts` SET `language` = {:s} WHERE `id` = {:d}", db.escapeString(lang), accountId));
 }

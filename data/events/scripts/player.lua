@@ -26,7 +26,7 @@ function Player:onLookInBattleList(creature, distance)
 end
 
 function Player:onLookInTrade(partner, item, distance)
-	local description = "You see " .. item:getDescription(distance)
+	local description = translateForPlayer(self, "You see %s", item:getDescription(distance))
 	if hasEvent.onLookInTrade then
 		description = Event.onLookInTrade(self, partner, item, distance, description)
 	end

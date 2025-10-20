@@ -239,6 +239,7 @@
     <ClCompile Include="..\src\teleport.cpp" />
     <ClCompile Include="..\src\thing.cpp" />
     <ClCompile Include="..\src\tile.cpp" />
+    <ClCompile Include="..\src\localization.cpp" />
     <ClCompile Include="..\src\tools.cpp" />
     <ClCompile Include="..\src\trashholder.cpp" />
     <ClCompile Include="..\src\vocation.cpp" />
@@ -325,6 +326,7 @@
     <ClInclude Include="..\src\thing.h" />
     <ClInclude Include="..\src\thread_holder_base.h" />
     <ClInclude Include="..\src\tile.h" />
+    <ClInclude Include="..\src\localization.h" />
     <ClInclude Include="..\src\tools.h" />
     <ClInclude Include="..\src\town.h" />
     <ClInclude Include="..\src\trashholder.h" />

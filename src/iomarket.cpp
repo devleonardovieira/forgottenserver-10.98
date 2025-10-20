@@ -32,7 +32,7 @@ MarketOfferList IOMarket::getActiveOffers(MarketAction_t action, uint16_t itemId
 		offer.counter = result->getNumber<uint32_t>("id") & 0xFFFF;
 		offer.itemId = itemId;
 		if (result->getNumber<uint16_t>("anonymous") == 0) {
-			offer.playerName = result->getString("player_name");
+			offer.playerName = std::string(result->getString("player_name").data(), result->getString("player_name").size());
 		} else {
 			offer.playerName = "Anonymous";
 		}
@@ -205,7 +205,8 @@ MarketOfferEx IOMarket::getOfferByCounter(uint32_t timestamp, uint16_t counter) 
 	offer.itemId = result->getNumber<uint16_t>("itemtype");
 	offer.playerId = result->getNumber<uint32_t>("player_id");
 	if (result->getNumber<uint16_t>("anonymous") == 0) {
-		offer.playerName = result->getString("player_name");
+		auto nameView = result->getString("player_name");
+		offer.playerName = std::string(nameView.data(), nameView.size());
 	} else {
 		offer.playerName = "Anonymous";
 	}

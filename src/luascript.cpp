@@ -34,6 +34,8 @@
 #include "storeinbox.h"
 #include "teleport.h"
 #include "weapons.h"
+#include "localization.h"
+#include "iologindata.h"
 
 #include <ranges>
 
@@ -1186,6 +1188,21 @@ void LuaScriptInterface::registerFunctions() {
 
 	//isScriptsInterface()
 	lua_register(L, "isScriptsInterface", LuaScriptInterface::luaIsScriptsInterface);
+
+	//translate(text[, ...])
+	lua_register(L, "translate", LuaScriptInterface::luaTranslate);
+
+	//translateForPlayer(player, text[, ...])
+	lua_register(L, "translateForPlayer", LuaScriptInterface::luaTranslateForPlayer);
+
+	//translateLang(lang, text[, ...])
+	lua_register(L, "translateLang", LuaScriptInterface::luaTranslateLang);
+
+	//loadLocalization(filePath)
+	lua_register(L, "loadLocalization", LuaScriptInterface::luaLoadLocalization);
+
+	//setPlayerLanguage(player, lang)
+	lua_register(L, "setPlayerLanguage", LuaScriptInterface::luaSetPlayerLanguage);
 
 #ifndef LUAJIT_VERSION
 	//bit operations for Lua, based on bitlib project release 24
@@ -3890,6 +3907,169 @@ int LuaScriptInterface::luaIsScriptsInterface(lua_State* L) {
 		reportErrorFunc(L, "Event: can only be called inside (data/scripts/)");
 		lua::pushBoolean(L, false);
 	}
+	return 1;
+}
+
+int LuaScriptInterface::luaTranslate(lua_State* L) {
+	// translate(text[, ...])
+	std::string key = lua::getString(L, 1);
+	int argc = lua_gettop(L);
+	std::vector<std::string> args;
+
+	for (int i = 2; i <= argc; ++i) {
+		if (lua_istable(L, i)) {
+			// Collect values from table as placeholders (array-style)
+			lua_pushnil(L);
+			while (lua_next(L, i) != 0) {
+				if (lua_isstring(L, -1)) {
+					const char* s = lua_tostring(L, -1);
+					args.emplace_back(s ? s : "");
+				} else if (lua_isnumber(L, -1)) {
+					double num = lua_tonumber(L, -1);
+					args.emplace_back(std::to_string(num));
+				} else if (lua_isboolean(L, -1)) {
+					args.emplace_back(lua_toboolean(L, -1) ? "true" : "false");
+				}
+				lua_pop(L, 1); // pop value, keep key for next iteration
+			}
+		} else if (lua_isstring(L, i)) {
+			args.emplace_back(lua::getString(L, i));
+		} else if (lua_isnumber(L, i)) {
+			double num = lua_tonumber(L, i);
+			args.emplace_back(std::to_string(num));
+		} else if (lua_isboolean(L, i)) {
+			args.emplace_back(lua_toboolean(L, i) ? "true" : "false");
+		}
+	}
+
+	std::string result;
+	if (args.empty()) {
+		result = Localization::instance().translate(key);
+	} else {
+		result = Localization::instance().translate(key, args);
+	}
+
+	lua_pushstring(L, result.c_str());
+	return 1;
+}
+
+int LuaScriptInterface::luaTranslateForPlayer(lua_State* L) {
+	// translateForPlayer(player, text[, ...])
+	Player* player = lua::getPlayer(L, 1);
+	if (!player) {
+		lua_pushstring(L, "");
+		return 1;
+	}
+
+	std::string key = lua::getString(L, 2);
+	int argc = lua_gettop(L);
+	std::vector<std::string> args;
+	for (int i = 3; i <= argc; ++i) {
+		if (lua_istable(L, i)) {
+			lua_pushnil(L);
+			while (lua_next(L, i) != 0) {
+				if (lua_isstring(L, -1)) {
+					const char* s = lua_tostring(L, -1);
+					args.emplace_back(s ? s : "");
+				} else if (lua_isnumber(L, -1)) {
+					double num = lua_tonumber(L, -1);
+					args.emplace_back(std::to_string(num));
+				} else if (lua_isboolean(L, -1)) {
+					args.emplace_back(lua_toboolean(L, -1) ? "true" : "false");
+				}
+				lua_pop(L, 1);
+			}
+		} else if (lua_isstring(L, i)) {
+			args.emplace_back(lua::getString(L, i));
+		} else if (lua_isnumber(L, i)) {
+			double num = lua_tonumber(L, i);
+			args.emplace_back(std::to_string(num));
+		} else if (lua_isboolean(L, i)) {
+			args.emplace_back(lua_toboolean(L, i) ? "true" : "false");
+		}
+	}
+
+	const std::string& lang = player->getLanguage();
+	std::string result;
+	if (args.empty()) {
+		result = Localization::instance().translate(key, lang);
+	} else {
+		result = Localization::instance().translate(key, lang, args);
+	}
+
+	lua_pushstring(L, result.c_str());
+	return 1;
+}
+
+int LuaScriptInterface::luaTranslateLang(lua_State* L) {
+	// translateLang(lang, text[, ...])
+	std::string lang = lua::getString(L, 1);
+	std::string key = lua::getString(L, 2);
+	int argc = lua_gettop(L);
+	std::vector<std::string> args;
+	for (int i = 3; i <= argc; ++i) {
+		if (lua_istable(L, i)) {
+			lua_pushnil(L);
+			while (lua_next(L, i) != 0) {
+				if (lua_isstring(L, -1)) {
+					const char* s = lua_tostring(L, -1);
+					args.emplace_back(s ? s : "");
+				} else if (lua_isnumber(L, -1)) {
+					double num = lua_tonumber(L, -1);
+					args.emplace_back(std::to_string(num));
+				} else if (lua_isboolean(L, -1)) {
+					args.emplace_back(lua_toboolean(L, -1) ? "true" : "false");
+				}
+				lua_pop(L, 1);
+			}
+		} else if (lua_isstring(L, i)) {
+			args.emplace_back(lua::getString(L, i));
+		} else if (lua_isnumber(L, i)) {
+			double num = lua_tonumber(L, i);
+			args.emplace_back(std::to_string(num));
+		} else if (lua_isboolean(L, i)) {
+			args.emplace_back(lua_toboolean(L, i) ? "true" : "false");
+		}
+	}
+
+	std::string result;
+	if (args.empty()) {
+		result = Localization::instance().translate(key, lang);
+	} else {
+		result = Localization::instance().translate(key, lang, args);
+	}
+
+	lua_pushstring(L, result.c_str());
+	return 1;
+}
+
+int LuaScriptInterface::luaLoadLocalization(lua_State* L) {
+	// loadLocalization(filePath)
+	std::string filePath = lua::getString(L, 1);
+	if (filePath.empty()) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	bool ok = Localization::instance().load(filePath);
+	lua_pushboolean(L, ok);
+	return 1;
+}
+
+int LuaScriptInterface::luaSetPlayerLanguage(lua_State* L) {
+	// setPlayerLanguage(player, lang)
+	Player* player = lua::getPlayer(L, 1);
+	if (!player) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	std::string lang = lua::getString(L, 2);
+	if (lang.empty()) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+	player->setLanguage(lang);
+	IOLoginData::setAccountLanguage(player->getAccount(), lang);
+	lua_pushboolean(L, true);
 	return 1;
 }
 

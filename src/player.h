@@ -13,6 +13,7 @@
 #include "guild.h"
 #include "inbox.h"
 #include "protocolgame.h"
+#include "localization.h"
 #include "town.h"
 #include "vocation.h"
 
@@ -134,7 +135,8 @@ class Player final : public Creature, public Cylinder {
 
 		void sendFYIBox(const std::string& message) {
 			if (client) {
-				client->sendFYIBox(message);
+				const std::string translated = Localization::instance().translate(message, getLanguage());
+				client->sendFYIBox(translated);
 			}
 		}
 
@@ -354,6 +356,12 @@ class Player final : public Creature, public Cylinder {
 		}
 		AccountType_t getAccountType() const {
 			return accountType;
+		}
+		const std::string& getLanguage() const {
+			return language;
+		}
+		void setLanguage(const std::string& lang) {
+			language = lang;
 		}
 		uint32_t getLevel() const {
 			return level;
@@ -888,7 +896,8 @@ class Player final : public Creature, public Cylinder {
 
 		void sendCancelMessage(const std::string& msg) const {
 			if (client) {
-				client->sendTextMessage(TextMessage(MESSAGE_STATUS_SMALL, msg));
+				const std::string translated = Localization::instance().translate(msg, getLanguage());
+				client->sendTextMessage(TextMessage(MESSAGE_STATUS_SMALL, translated));
 			}
 		}
 		void sendCancelMessage(ReturnValue message) const;
@@ -953,12 +962,15 @@ class Player final : public Creature, public Cylinder {
 		}
 		void sendTextMessage(MessageClasses mclass, const std::string& message) const {
 			if (client) {
-				client->sendTextMessage(TextMessage(mclass, message));
+				const std::string translated = Localization::instance().translate(message, getLanguage());
+				client->sendTextMessage(TextMessage(mclass, translated));
 			}
 		}
 		void sendTextMessage(const TextMessage& message) const {
 			if (client) {
-				client->sendTextMessage(message);
+				TextMessage copy = message;
+				copy.text = Localization::instance().translate(copy.text, getLanguage());
+				client->sendTextMessage(copy);
 			}
 		}
 		void sendReLoginWindow(uint8_t unfairFightReduction) const {
@@ -1231,6 +1243,7 @@ class Player final : public Creature, public Cylinder {
 		std::forward_list<Condition*> storedConditionList; // TODO: This variable is only temporarily used when logging in, get rid of it somehow
 
 		std::string name;
+		std::string language = "en";
 		std::string guildNick;
 
 		Skill skills[SKILL_LAST + 1];

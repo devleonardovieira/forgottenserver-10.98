@@ -20,8 +20,11 @@
 #include "script.h"
 #include "scriptmanager.h"
 #include "server.h"
+#include "localization.h"
 
 #include <fstream>
+
+#include <filesystem>
 
 #if __has_include("gitmetadata.h")
 #include "gitmetadata.h"
@@ -88,6 +91,19 @@ namespace {
 			return;
 		}
 
+		// Load localization files: load all .loc files
+		try {
+			for (const auto& entry : std::filesystem::directory_iterator(".")) {
+				if (entry.is_regular_file()) {
+					const auto& path = entry.path();
+					if (path.has_extension() && path.extension() == ".loc") {
+						Localization::instance().load(path.filename().string());
+					}
+				}
+			}
+		} catch (const std::exception& e) {
+			std::cout << ">> Warning: failed to scan localization files: " << e.what() << std::endl;
+		}
 	#ifdef _WIN32
 		const std::string& defaultPriority = getString(ConfigManager::DEFAULT_PRIORITY);
 		if (caseInsensitiveEqual(defaultPriority, "high")) {

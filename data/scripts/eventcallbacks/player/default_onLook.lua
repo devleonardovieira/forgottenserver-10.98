@@ -1,7 +1,7 @@
 local event = Event()
 
 event.onLook = function(self, thing, position, distance, description)
-	local description = "You see " .. thing:getDescription(distance)
+	local description = translateForPlayer(self, "You see %s", thing:getDescription(distance))
 	if self:getGroup():getAccess() then
 		if thing:isItem() then
 			description = string.format("%s\nItem ID: %d", description, thing:getId())

@@ -181,3 +181,6 @@ pip-log.txt
 ## TFS / OT
 #############
 config.lua
+/vcpkg_installed
+config.lua.dist
+*.dist

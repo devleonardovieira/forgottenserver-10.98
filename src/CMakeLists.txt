@@ -44,6 +44,7 @@ set(tfs_SRC
 	${CMAKE_CURRENT_LIST_DIR}/networkmessage.cpp
 	${CMAKE_CURRENT_LIST_DIR}/npc.cpp
 	${CMAKE_CURRENT_LIST_DIR}/otserv.cpp
+	${CMAKE_CURRENT_LIST_DIR}/localization.cpp
 	${CMAKE_CURRENT_LIST_DIR}/outfit.cpp
 	${CMAKE_CURRENT_LIST_DIR}/outputmessage.cpp
 	${CMAKE_CURRENT_LIST_DIR}/party.cpp
@@ -129,6 +130,7 @@ set(tfs_HDR
 	${CMAKE_CURRENT_LIST_DIR}/networkmessage.h
 	${CMAKE_CURRENT_LIST_DIR}/npc.h
 	${CMAKE_CURRENT_LIST_DIR}/otserv.h
+	${CMAKE_CURRENT_LIST_DIR}/localization.h
 	${CMAKE_CURRENT_LIST_DIR}/outfit.h
 	${CMAKE_CURRENT_LIST_DIR}/outputmessage.h
 	${CMAKE_CURRENT_LIST_DIR}/party.h

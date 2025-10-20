@@ -4731,7 +4731,10 @@ void Game::loadMotdNum() {
 
 	result = db.storeQuery("SELECT `value` FROM `server_config` WHERE `config` = 'motd_hash'");
 	if (result) {
-		motdHash = result->getString("value");
+		{
+			auto motdView = result->getString("value");
+			motdHash = std::string(motdView.data(), motdView.size());
+		}
 		if (motdHash != transformToSHA1(getString(ConfigManager::MOTD))) {
 			++motdNum;
 		}

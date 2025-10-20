@@ -29,12 +29,12 @@ namespace IOBan {
 		auto banInfo = std::make_optional<BanInfo>();
 		banInfo->expiresAt = expiresAt;
 	 
-		banInfo->reason = result->getString("reason");
+		banInfo->reason = std::string(result->getString("reason").data(), result->getString("reason").size());
 		if (banInfo->reason.empty()) {
 			banInfo->reason = "(none)";
 		}
 	 
-		banInfo->bannedBy = result->getString("name");
+		banInfo->bannedBy = std::string(result->getString("name").data(), result->getString("name").size());
 		return banInfo;
 	}
 
@@ -59,12 +59,12 @@ namespace IOBan {
 		auto banInfo = std::make_optional<BanInfo>();
 		banInfo->expiresAt = expiresAt;
 	 
-		banInfo->reason = result->getString("reason");
+		banInfo->reason = std::string(result->getString("reason").data(), result->getString("reason").size());
 		if (banInfo->reason.empty()) {
 			banInfo->reason = "(none)";
 		}
 	 
-		banInfo->bannedBy = result->getString("name");
+		banInfo->bannedBy = std::string(result->getString("name").data(), result->getString("name").size());
 		return banInfo;
 	}
 
